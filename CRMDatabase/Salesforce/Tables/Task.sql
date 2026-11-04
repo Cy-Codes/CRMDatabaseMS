@@ -1,0 +1,25 @@
+CREATE TABLE [Salesforce].[Task]
+(
+    [Id] NVARCHAR(18) NOT NULL,
+    [WhoId] NVARCHAR(18) NULL,
+    [WhatId] NVARCHAR(18) NULL,
+    [WhoCount] INT NOT NULL CONSTRAINT [DF_Salesforce_Task_WhoCount] DEFAULT (0),
+    [WhatCount] INT NOT NULL CONSTRAINT [DF_Salesforce_Task_WhatCount] DEFAULT (0),
+    [Subject] NVARCHAR(255) NOT NULL,
+    [ActivityDate] DATE NULL,
+    [Status] NVARCHAR(40) NOT NULL CONSTRAINT [DF_Salesforce_Task_Status] DEFAULT (N'Not Started'),
+    [Priority] NVARCHAR(40) NOT NULL CONSTRAINT [DF_Salesforce_Task_Priority] DEFAULT (N'Normal'),
+    [IsHighPriority] BIT NOT NULL CONSTRAINT [DF_Salesforce_Task_IsHighPriority] DEFAULT (0),
+    [OwnerId] NVARCHAR(18) NOT NULL,
+    [Description] NVARCHAR(MAX) NULL,
+    [IsDeleted] BIT NOT NULL CONSTRAINT [DF_Salesforce_Task_IsDeleted] DEFAULT (0),
+    [IsClosed] BIT NOT NULL CONSTRAINT [DF_Salesforce_Task_IsClosed] DEFAULT (0),
+    [CreatedDate] DATETIME2 NOT NULL CONSTRAINT [DF_Salesforce_Task_CreatedDate] DEFAULT (SYSUTCDATETIME()),
+    [CreatedById] NVARCHAR(18) NOT NULL,
+    [LastModifiedDate] DATETIME2 NOT NULL CONSTRAINT [DF_Salesforce_Task_LastModifiedDate] DEFAULT (SYSUTCDATETIME()),
+    [LastModifiedById] NVARCHAR(18) NOT NULL,
+    CONSTRAINT [PK_Salesforce_Task] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [FK_Salesforce_Task_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [Salesforce].[User] ([Id]),
+    CONSTRAINT [FK_Salesforce_Task_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [Salesforce].[User] ([Id]),
+    CONSTRAINT [FK_Salesforce_Task_LastModifiedById] FOREIGN KEY ([LastModifiedById]) REFERENCES [Salesforce].[User] ([Id])
+);

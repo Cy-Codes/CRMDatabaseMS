@@ -1,0 +1,27 @@
+CREATE TABLE [Salesforce].[Event]
+(
+    [Id] NVARCHAR(18) NOT NULL,
+    [WhoId] NVARCHAR(18) NULL,
+    [WhatId] NVARCHAR(18) NULL,
+    [WhoCount] INT NOT NULL CONSTRAINT [DF_Salesforce_Event_WhoCount] DEFAULT (0),
+    [WhatCount] INT NOT NULL CONSTRAINT [DF_Salesforce_Event_WhatCount] DEFAULT (0),
+    [Subject] NVARCHAR(255) NOT NULL,
+    [Location] NVARCHAR(255) NULL,
+    [IsAllDayEvent] BIT NOT NULL CONSTRAINT [DF_Salesforce_Event_IsAllDayEvent] DEFAULT (0),
+    [ActivityDateTime] DATETIME2 NULL,
+    [ActivityDate] DATE NULL,
+    [DurationInMinutes] INT NULL,
+    [StartDateTime] DATETIME2 NOT NULL,
+    [EndDateTime] DATETIME2 NOT NULL,
+    [Description] NVARCHAR(MAX) NULL,
+    [OwnerId] NVARCHAR(18) NOT NULL,
+    [IsDeleted] BIT NOT NULL CONSTRAINT [DF_Salesforce_Event_IsDeleted] DEFAULT (0),
+    [CreatedDate] DATETIME2 NOT NULL CONSTRAINT [DF_Salesforce_Event_CreatedDate] DEFAULT (SYSUTCDATETIME()),
+    [CreatedById] NVARCHAR(18) NOT NULL,
+    [LastModifiedDate] DATETIME2 NOT NULL CONSTRAINT [DF_Salesforce_Event_LastModifiedDate] DEFAULT (SYSUTCDATETIME()),
+    [LastModifiedById] NVARCHAR(18) NOT NULL,
+    CONSTRAINT [PK_Salesforce_Event] PRIMARY KEY CLUSTERED ([Id] ASC),
+    CONSTRAINT [FK_Salesforce_Event_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [Salesforce].[User] ([Id]),
+    CONSTRAINT [FK_Salesforce_Event_CreatedById] FOREIGN KEY ([CreatedById]) REFERENCES [Salesforce].[User] ([Id]),
+    CONSTRAINT [FK_Salesforce_Event_LastModifiedById] FOREIGN KEY ([LastModifiedById]) REFERENCES [Salesforce].[User] ([Id])
+);

@@ -1,0 +1,25 @@
+CREATE TABLE [HubSpot].[Contact]
+(
+    [contactId] BIGINT NOT NULL,
+    [email] NVARCHAR(255) NOT NULL,
+    [firstName] NVARCHAR(100) NULL,
+    [lastName] NVARCHAR(100) NULL,
+    [phone] NVARCHAR(50) NULL,
+    [mobilePhone] NVARCHAR(50) NULL,
+    [jobTitle] NVARCHAR(100) NULL,
+    [associatedCompanyId] BIGINT NULL,
+    [ownerId] BIGINT NULL,
+    [lifecyclestage] NVARCHAR(50) NOT NULL CONSTRAINT [DF_HubSpot_Contact_lifecyclestage] DEFAULT (N'lead'),
+    [leadStatus] NVARCHAR(50) NULL,
+    [address] NVARCHAR(255) NULL,
+    [city] NVARCHAR(100) NULL,
+    [state] NVARCHAR(100) NULL,
+    [zip] NVARCHAR(30) NULL,
+    [country] NVARCHAR(100) NULL,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [DF_HubSpot_Contact_createdAt] DEFAULT (SYSUTCDATETIME()),
+    [updatedAt] DATETIME2 NOT NULL CONSTRAINT [DF_HubSpot_Contact_updatedAt] DEFAULT (SYSUTCDATETIME()),
+    [archived] BIT NOT NULL CONSTRAINT [DF_HubSpot_Contact_archived] DEFAULT (0),
+    CONSTRAINT [PK_HubSpot_Contact] PRIMARY KEY CLUSTERED ([contactId] ASC),
+    CONSTRAINT [FK_HubSpot_Contact_associatedCompanyId] FOREIGN KEY ([associatedCompanyId]) REFERENCES [HubSpot].[Company] ([companyId]),
+    CONSTRAINT [FK_HubSpot_Contact_ownerId] FOREIGN KEY ([ownerId]) REFERENCES [HubSpot].[Owner] ([ownerId])
+);
