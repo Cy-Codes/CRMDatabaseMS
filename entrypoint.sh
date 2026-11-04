@@ -39,6 +39,23 @@ if [ -f "/app/CRMDatabase.dacpac" ]; then
         /TargetPassword:"$DB_PASSWORD" \
         /TargetTrustServerCertificate:True
     echo "CRM Database schemas (Salesforce, HubSpot, Dynamics 365) successfully deployed and ready for connections!"
+
+    # Seed initial data if SEED_DATA environment variable is set
+    SEED_DATA="${SEED_DATA:-standard}"
+    if [ "$SEED_DATA" = "standard" ] || [ "$SEED_DATA" = "50" ]; then
+        echo "Seeding standard CRM data (50 records per entity)..."
+        "$SQLCMD" -S localhost -U "$DB_USER" -P "$DB_PASSWORD" -C -d "$DB_NAME" -Q "EXEC [dbo].[sp_SeedStandardData] @CleanExisting = 1;"
+        echo "Standard CRM data seeded successfully (50 records per entity)."
+    elif [ "$SEED_DATA" = "heavy" ] || [ "$SEED_DATA" = "etl" ]; then
+        SCALE_FACTOR="${SEED_SCALE_FACTOR:-100}"
+        echo "Simulating heavy ETL data load (Scale Factor: $SCALE_FACTOR)..."
+        "$SQLCMD" -S localhost -U "$DB_USER" -P "$DB_PASSWORD" -C -d "$DB_NAME" -Q "EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = $SCALE_FACTOR, @CleanExisting = 1;"
+        echo "Heavy ETL data load simulation completed successfully."
+    elif [ "$SEED_DATA" = "none" ] || [ "$SEED_DATA" = "0" ] || [ "$SEED_DATA" = "false" ]; then
+        echo "SEED_DATA is set to '$SEED_DATA', skipping seed data generation."
+    else
+        echo "SEED_DATA is set to '$SEED_DATA', skipping seed data generation."
+    fi
 else
     echo "Warning: /app/CRMDatabase.dacpac not found, skipping dacpac publish."
 fi

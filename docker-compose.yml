@@ -9,6 +9,8 @@ services:
       SA_PASSWORD: "${SA_PASSWORD:-CrmDev2026!Secure#Pass}"
       MSSQL_SA_PASSWORD: "${SA_PASSWORD:-CrmDev2026!Secure#Pass}"
       DB_NAME: "${DB_NAME:-CRMDatabase}"
+      SEED_DATA: "${SEED_DATA:-standard}"
+      SEED_SCALE_FACTOR: "${SEED_SCALE_FACTOR:-100}"
     ports:
       - "${DB_PORT:-1433}:1433"
     healthcheck:

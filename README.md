@@ -136,6 +136,76 @@ docker compose down
 
 ---
 
+## Seed Data & Heavy ETL Workload Simulation
+
+The database includes built-in stored procedures and standalone scripts for populating development environments and benchmarking heavy production ETL pipelines.
+
+### Available Datasets
+
+1. **Standard Seed Dataset (`50 Records per Entity`)**:
+   - Creates 50 realistic, relationally linked records with sane defaults across all 37 CRM tables (**1,850 total records**).
+   - Generates realistic business entities, accounts, contacts, campaigns, opportunities, line items, service cases, tasks, and polymorphic associations.
+
+2. **Heavy Production ETL Simulation (`sp_SimulateHeavyETLLoad`)**:
+   - Generates high-volume production datasets using set-based CTE pipelines with realistic distributions, timestamps across a 2-year rolling window, status variations, and soft-delete tombstone flags.
+   - **Configurable Scale Factors**:
+     - `@ScaleFactor = 10`: ~30,000 records total (rapid pipeline verification).
+     - `@ScaleFactor = 100`: ~300,000 records total (standard production ETL benchmark).
+     - `@ScaleFactor = 500`: ~1,500,000 records total (enterprise stress test).
+
+---
+
+### Running via Stored Procedures
+
+Execute directly from any SQL client or connection:
+
+```sql
+-- 1. Seed standard 50 records per entity (1,850 records total)
+EXEC [dbo].[sp_SeedStandardData] @CleanExisting = 1;
+
+-- 2. Simulate heavy ETL load (e.g. Scale Factor 100 -> ~300,000 records)
+EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 100, @CleanExisting = 1;
+
+-- 3. Reset and clean all CRM tables
+EXEC [dbo].[sp_CleanupAllCRMData];
+```
+
+---
+
+### Running via Standalone Scripts
+
+Pre-packaged scripts are located in `Scripts/` (and inside the container at `/app/Scripts/`):
+
+- **`Scripts/00_Cleanup_All_Data.sql`**: Wipes all CRM tables in dependency order.
+- **`Scripts/01_Seed_Standard_50Records.sql`**: Seeds 50 records per table with row count verification.
+- **`Scripts/02_Simulate_Heavy_ETL_Load.sql`**: Generates high-volume ETL records with schema summary reports.
+
+Execute via Docker CLI:
+
+```bash
+# Run Standard Seed (50 records per table)
+docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/Scripts/01_Seed_Standard_50Records.sql
+
+# Run Heavy ETL Simulation Load
+docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/Scripts/02_Simulate_Heavy_ETL_Load.sql
+```
+
+---
+
+### Automated Container Seeding via Environment Variables
+
+Control automated seeding on startup by configuring `.env`:
+
+```dotenv
+# Options: 'standard' (50 records), 'heavy' (ETL simulation), or 'none'
+SEED_DATA=standard
+
+# Scale factor when SEED_DATA=heavy (10 = ~30k, 100 = ~300k, 500 = ~1.5M)
+SEED_SCALE_FACTOR=100
+```
+
+---
+
 ## Connection & Login Troubleshooting
 
 ### Default Connection Parameters
