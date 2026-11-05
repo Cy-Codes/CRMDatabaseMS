@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{42EA0DBD-9CF1-443E-919E-BE9C484E4577}") = "CRMDatabase", "CRMDatabase\CRMDatabase.sqlproj", "{8B63DDBF-DEA3-43B6-B613-80C4E03CF094}"
+Project("{42EA0DBD-9CF1-443E-919E-BE9C484E4577}") = "CRMDatabaseMS", "CRMDatabaseMS\CRMDatabaseMS.sqlproj", "{8B63DDBF-DEA3-43B6-B613-80C4E03CF094}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
