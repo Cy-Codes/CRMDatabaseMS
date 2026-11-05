@@ -1,3 +1,5 @@
+TEST delete me
+
 # CRMDatabaseMS: Microsoft SQL Server State-Based CRM Database
 
 A production-grade Microsoft SQL Server / Azure SQL database project (`Microsoft.Build.Sql` SDK-style `.sqlproj`) modeling the top 3 enterprise CRM relational data architectures:
