@@ -1,5 +1,3 @@
-TEST delete me
-
 # CRMDatabaseMS: Microsoft SQL Server State-Based CRM Database
 
 A production-grade Microsoft SQL Server / Azure SQL database project (`Microsoft.Build.Sql` SDK-style `.sqlproj`) modeling the top 3 enterprise CRM relational data architectures:
@@ -17,7 +15,7 @@ This project utilizes a **declarative, state-based database deployment model** p
 The database manages 37 CRM entity tables partitioned across three dedicated schemas:
 
 ```
-CRMDatabase (Microsoft SQL Server)
+CRMDatabaseMS (Microsoft SQL Server)
 ├── [Salesforce] Schema (15 Tables)
 │   ├── User, Account, Contact, AccountContactRelation, Lead
 │   ├── Campaign, CampaignMember, Opportunity, Product2, Pricebook2
@@ -41,7 +39,7 @@ Unlike imperative/migration-based tools (such as Flyway or Liquibase used in **C
 
 * **Source of Truth**: The individual `.sql` DDL files in source control represent the **desired end state** of every database object (`CREATE TABLE [Salesforce].[Account]`, etc.).
 * **No Versioned Migration Scripts**: Developers do not write transition scripts (`V1__...`, `V2__...`). Instead, you edit the table definition directly in its `.sql` file.
-* **Compilation**: The .NET SDK builds the `.sqlproj` project into a compiled Data-Tier Application binary package (**`CRMDatabase.dacpac`**).
+* **Compilation**: The .NET SDK builds the `.sqlproj` project into a compiled Data-Tier Application binary package (**`CRMDatabaseMS.dacpac`**).
 * **Automated Differential Deployment**: At release time, the deployment engine (**`SqlPackage.exe`** / DACFx) connects to the target database, inspects the current live catalog, computes a dependency graph diff between the `.dacpac` model and the live database, and generates an ephemeral transactional DDL synchronization script.
 
 ```
@@ -52,7 +50,7 @@ Unlike imperative/migration-based tools (such as Flyway or Liquibase used in **C
                             │  dotnet build
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│                 CRMDatabase.dacpac                     │
+│                CRMDatabaseMS.dacpac                    │
 │         (Compiled Database Model Artifact)             │
 └───────────────────────────┬────────────────────────────┘
                             │  SqlPackage /Action:Publish
@@ -207,14 +205,14 @@ The repository includes automated database verification suites in `tests/` (and 
 #### Option 1: Via Docker Container
 ```bash
 # Execute master test suite inside the running container
-docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/tests/03_run_all_tests.sql
+docker exec -i crm-database-ms /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabaseMS -i /app/tests/03_run_all_tests.sql
 ```
 
 #### Option 2: Via Shell Test Runner (`tests/run_tests.sh`)
 ```bash
 export DB_SERVER=localhost
 export DB_PORT=1433
-export DB_NAME=CRMDatabase
+export DB_NAME=CRMDatabaseMS
 export SA_PASSWORD=CrmDev2026!Secure#Pass
 
 ./tests/run_tests.sh
@@ -240,7 +238,7 @@ Default configuration in `.env`:
 ```dotenv
 ACCEPT_EULA=Y
 SA_PASSWORD=CrmDev2026!Secure#Pass
-DB_NAME=CRMDatabase
+DB_NAME=CRMDatabaseMS
 DB_PORT=1433
 SEED_DATA=standard
 SEED_SCALE_FACTOR=100
@@ -258,7 +256,7 @@ docker compose logs -f
 
 ### 4. Connect via `sqlcmd`
 ```bash
-docker exec -it crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -Q "SELECT TABLE_SCHEMA, COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA;"
+docker exec -it crm-database-ms /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabaseMS -Q "SELECT TABLE_SCHEMA, COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA;"
 ```
 
 ---

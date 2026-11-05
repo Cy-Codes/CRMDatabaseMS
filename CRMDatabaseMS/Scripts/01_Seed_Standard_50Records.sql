@@ -4,7 +4,7 @@
 --              across Salesforce, HubSpot, and Dynamics 365 (1,850 records total).
 -- ============================================================================
 
-USE [CRMDatabase];
+USE [CRMDatabaseMS];
 GO
 
 EXEC [dbo].[sp_SeedStandardData] @CleanExisting = 1;

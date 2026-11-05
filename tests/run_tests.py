@@ -9,7 +9,7 @@ import subprocess
 
 DB_SERVER = os.environ.get("DB_SERVER", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "1433")
-DB_NAME = os.environ.get("DB_NAME", "CRMDatabase")
+DB_NAME = os.environ.get("DB_NAME", "CRMDatabaseMS")
 DB_USER = os.environ.get("DB_USER", "sa")
 DB_PASSWORD = os.environ.get("SA_PASSWORD", os.environ.get("MSSQL_SA_PASSWORD", "CrmDev2026!Secure#Pass"))
 

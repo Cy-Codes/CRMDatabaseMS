@@ -1,14 +1,14 @@
 services:
-  crm-database:
+  crm-database-ms:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: crm-database
+    container_name: crm-database-ms
     environment:
       ACCEPT_EULA: "${ACCEPT_EULA:-Y}"
       SA_PASSWORD: "${SA_PASSWORD:-CrmDev2026!Secure#Pass}"
       MSSQL_SA_PASSWORD: "${SA_PASSWORD:-CrmDev2026!Secure#Pass}"
-      DB_NAME: "${DB_NAME:-CRMDatabase}"
+      DB_NAME: "${DB_NAME:-CRMDatabaseMS}"
       SEED_DATA: "${SEED_DATA:-standard}"
       SEED_SCALE_FACTOR: "${SEED_SCALE_FACTOR:-100}"
     ports:

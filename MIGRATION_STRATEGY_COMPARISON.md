@@ -16,7 +16,7 @@ Both approaches are battle-tested in enterprise environments, but they optimize 
 ### 1. State-Based Lifecycle (CRMDatabaseMS)
 
 ```
-[Source Code (DDL)]  --->  [dotnet build]  --->  [CRMDatabase.dacpac]
+[Source Code (DDL)]  --->  [dotnet build]  --->  [CRMDatabaseMS.dacpac]
 (Table.sql per entity)                             │
                                                    ▼
 [Target Database]    <---  [SqlPackage Publish] <──┘

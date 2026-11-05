@@ -31,11 +31,11 @@ RUN ARCH=$(uname -m) && \
     rm /tmp/sqlpackage.zip
 
 WORKDIR /app
-COPY --from=builder /app/dacpac/CRMDatabase.dacpac /app/CRMDatabase.dacpac
+COPY --from=builder /app/dacpac/CRMDatabaseMS.dacpac /app/CRMDatabaseMS.dacpac
 COPY Scripts /app/Scripts
 COPY tests /app/tests
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh && \
+RUN chmod +x /app/entrypoint.sh /app/tests/run_tests.sh && \
     chown -R mssql:root /app /opt/sqlpackage
 
 USER mssql

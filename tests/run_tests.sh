@@ -7,7 +7,7 @@ set -euo pipefail
 
 DB_SERVER="${DB_SERVER:-localhost}"
 DB_PORT="${DB_PORT:-1433}"
-DB_NAME="${DB_NAME:-CRMDatabase}"
+DB_NAME="${DB_NAME:-CRMDatabaseMS}"
 DB_USER="${DB_USER:-sa}"
 DB_PASSWORD="${SA_PASSWORD:-${MSSQL_SA_PASSWORD:-CrmDev2026!Secure#Pass}}"
 

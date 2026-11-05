@@ -4,7 +4,7 @@
 --              schemas in reverse foreign key dependency order.
 -- ============================================================================
 
-USE [CRMDatabase];
+USE [CRMDatabaseMS];
 GO
 
 EXEC [dbo].[sp_CleanupAllCRMData];

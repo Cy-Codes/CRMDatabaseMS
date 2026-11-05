@@ -9,7 +9,7 @@
 --   @ScaleFactor = 500  -> ~1,500,000 records total (Heavy stress test)
 -- ============================================================================
 
-USE [CRMDatabase];
+USE [CRMDatabaseMS];
 GO
 
 EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 100, @CleanExisting = 1;

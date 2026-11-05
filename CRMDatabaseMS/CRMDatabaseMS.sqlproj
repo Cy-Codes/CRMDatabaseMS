@@ -2,7 +2,8 @@
 <Project DefaultTargets="Build">
     <Sdk Name="Microsoft.Build.Sql" Version="2.2.0"/>
     <PropertyGroup>
-        <Name>CRMDatabase</Name>
+        <Name>CRMDatabaseMS</Name>
+        <AssemblyName>CRMDatabaseMS</AssemblyName>
         <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
         <ModelCollation>1033, CI</ModelCollation>
         <ProjectGuid>8B63DDBF-DEA3-43B6-B613-80C4E03CF094</ProjectGuid>

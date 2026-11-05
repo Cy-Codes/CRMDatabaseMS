@@ -1,0 +1,84 @@
+name: CRMDatabaseMS CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  DB_NAME: CRMDatabaseMS
+  DB_USER: sa
+  SA_PASSWORD: "CrmDev2026!Secure#Pass"
+  MSSQL_SA_PASSWORD: "CrmDev2026!Secure#Pass"
+  SEED_DATA: standard
+
+jobs:
+  build-dacpac:
+    name: Build SQL Project & Package DACPAC
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore & Build CRMDatabaseMS.sqlproj
+        run: dotnet build CRMDatabaseMS/CRMDatabaseMS.sqlproj -c Release -o ./artifacts
+
+      - name: Verify DACPAC Artifact Exists
+        run: |
+          test -f ./artifacts/CRMDatabaseMS.dacpac
+          ls -lh ./artifacts/CRMDatabaseMS.dacpac
+
+      - name: Upload DACPAC Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: crm-database-ms-dacpac
+          path: ./artifacts/CRMDatabaseMS.dacpac
+          retention-days: 14
+
+  verify-database:
+    name: Deploy DACPAC, Seed Data & Run SQL Server Tests
+    needs: build-dacpac
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build and Start SQL Server Container
+        run: docker compose up -d --build
+
+      - name: Wait for DACPAC Deployment and Standard Data Seeding
+        run: |
+          echo "Waiting for SQL Server container to deploy DACPAC and finish seeding..."
+          for i in {1..90}; do
+            if docker logs crm-database-ms 2>&1 | grep -q "Standard CRM data seeded successfully"; then
+              echo "Database deployed and seeded successfully!"
+              break
+            fi
+            if [ "$i" -eq 90 ]; then
+              echo "Timed out waiting for database initialization. Container logs:"
+              docker logs crm-database-ms
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Execute SQL Server Test Suite (Bash Runner)
+        run: docker exec crm-database-ms /app/tests/run_tests.sh
+
+      - name: Verify Heavy ETL Load Stored Procedure (ScaleFactor = 10)
+        run: |
+          docker exec crm-database-ms /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U "$DB_USER" -P "$SA_PASSWORD" -C -d "$DB_NAME" -b \
+            -Q "EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 10, @CleanExisting = 1;"
+          docker exec crm-database-ms /app/tests/run_tests.sh
+
+      - name: Tear Down Container
+        if: always()
+        run: docker compose down -v
