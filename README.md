@@ -1,91 +1,236 @@
-# CRMDatabase
+# CRMDatabaseMS: Microsoft SQL Server State-Based CRM Database
 
-A SQL Database Project (SDK-style `Microsoft.Build.Sql`) modeling the top 3 CRM relational data models based on their official public documentation:
+A production-grade Microsoft SQL Server / Azure SQL database project (`Microsoft.Build.Sql` SDK-style `.sqlproj`) modeling the top 3 enterprise CRM relational data architectures:
 
-1. **Salesforce (Sales Cloud & Platform Data Model)** (`[Salesforce]` schema)
-2. **HubSpot (CRM Object & Association Model)** (`[HubSpot]` schema)
-3. **Microsoft Dynamics 365 (Dataverse / Common Data Model)** (`[Dynamics365]` schema)
+1. **Salesforce (Sales Cloud & Platform Data Model)** (`[Salesforce]` schema — 15 Tables)
+2. **HubSpot (CRM Object & Association Model)** (`[HubSpot]` schema — 11 Tables)
+3. **Microsoft Dynamics 365 (Dataverse / Common Data Model)** (`[Dynamics365]` schema — 11 Tables)
 
----
-
-## 1. Salesforce Data Model (`Salesforce`)
-
-Modeled after the [Salesforce Object Reference for Salesforce and Lightning Platform](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_concepts.htm). Uses standard 18-character alphanumeric identifier keys (`NVARCHAR(18)`), audit fields (`CreatedDate`, `CreatedById`, `LastModifiedDate`, `LastModifiedById`), and soft-delete flags (`IsDeleted`).
-
-### Tables & Key Entities
-- **`User`**: Internal system users, owners, and creators.
-- **`Account`**: Companies, organizations, and accounts with parent hierarchy (`ParentId`) and billing/shipping addresses.
-- **`Contact`**: Individuals associated with Accounts with organizational hierarchy (`ReportsToId`).
-- **`AccountContactRelation`**: Many-to-many relationship supporting roles between Accounts and Contacts.
-- **`Lead`**: Unqualified prospects with lead conversion tracking (`ConvertedAccountId`, `ConvertedContactId`, `ConvertedOpportunityId`).
-- **`Campaign` & `CampaignMember`**: Marketing initiatives and member tracking across Leads and Contacts.
-- **`Opportunity`**: Sales deals with stages (`StageName`), probability calculations, expected revenue, and forecast categories.
-- **`Product2`**: Product catalog items with product families and active flags.
-- **`Pricebook2` & `PricebookEntry`**: Standard and custom price books with currency unit pricing.
-- **`OpportunityLineItem`**: Product line items associated with an Opportunity and PricebookEntry.
-- **`Case`**: Customer service and support requests with escalation tracking and parent-case hierarchies.
-- **`Task` & `Event`**: CRM activities, scheduled follow-ups, and calendar events.
+This project utilizes a **declarative, state-based database deployment model** powered by SQL Server Data Tools (SSDT), the `Microsoft.Build.Sql` SDK, and DACPAC artifacts.
 
 ---
 
-## 2. HubSpot CRM Data Model (`HubSpot`)
+## 🏛️ Architecture Overview
 
-Modeled after the [HubSpot CRM API & Objects Documentation](https://developers.hubspot.com/docs/api/crm/understanding-the-crm). Uses standard numeric object IDs (`BIGINT`), lifecycle stages, custom pipeline/stage definitions, and HubSpot's polymorphic association engine.
+The database manages 37 CRM entity tables partitioned across three dedicated schemas:
 
-### Tables & Key Entities
-- **`Owner`**: HubSpot CRM owners and users assigned to records.
-- **`Company`**: Organizations with domain tracking, annual revenue, and lifecycle stages (`lifecyclestage`).
-- **`Contact`**: Contact records with email, job title, company association, and lead status (`leadStatus`).
-- **`Pipeline` & `DealStage`**: Configurable multi-pipeline sales and ticket stages with probability weighting and closed-won status.
-- **`Deal`**: Sales opportunities progressing through pipeline stages with amounts and close dates.
-- **`Ticket`**: Service tickets tied to pipelines, statuses, and priority levels.
-- **`Product` & `LineItem`**: Product master and deal line items with recurring billing frequencies and discounts.
-- **`Engagement`**: Interactions including Calls, Emails, Meetings, Notes, and Tasks.
-- **`ObjectAssociation`**: HubSpot-style polymorphic association layer linking any CRM object pair with defined association type IDs.
-
----
-
-## 3. Microsoft Dynamics 365 Data Model (`Dynamics365`)
-
-Modeled after [Microsoft Dataverse & Dynamics 365 Sales Entity Reference / Common Data Model (CDM)](https://learn.microsoft.com/en-us/dynamics365/customer-engagement/web-api/about). Uses globally unique identifiers (`UNIQUEIDENTIFIER` / GUIDs), business units for multi-tenant / departmental security, and standard state/status codes (`statecode`, `statuscode`).
-
-### Tables & Key Entities
-- **`BusinessUnit`**: Hierarchical organizational and security units.
-- **`SystemUser`**: Dynamics 365 users associated with BusinessUnits and ownership roles.
-- **`Account`**: Business customers with account numbers, ownership, parent accounts, and address fields.
-- **`Contact`**: Individual customer contacts linked to parent accounts (`parentcustomerid`).
-- **`Lead`**: Sales prospects with quality ratings (Hot/Warm/Cold), conversion references, and estimated amounts.
-- **`PriceLevel`**: Price lists with effective date ranges.
-- **`Product`**: Catalog products with standard and current costs and quantity on hand.
-- **`Opportunity`**: Sales opportunities linked to accounts, contacts, originating leads, and price lists.
-- **`OpportunityProduct`**: Line items tied to Opportunities, Products, and unit pricing.
-- **`Incident`**: Customer service cases with ticket numbers, priorities, severity codes, and resolution states.
-- **`ActivityPointer`**: Base activity entity storing tasks, phone calls, emails, and appointments regarding accounts, contacts, opportunities, or cases.
-
----
-
-## Build & Verify
-
-### Local .NET SDK Build
-
-Build the database project and generate the `.dacpac` artifact using the .NET SDK:
-
-```bash
-dotnet build
+```
+CRMDatabase (Microsoft SQL Server)
+├── [Salesforce] Schema (15 Tables)
+│   ├── User, Account, Contact, AccountContactRelation, Lead
+│   ├── Campaign, CampaignMember, Opportunity, Product2, Pricebook2
+│   ├── PricebookEntry, OpportunityLineItem, Case, Task, Event
+├── [HubSpot] Schema (11 Tables)
+│   ├── Owner, Company, Contact, Pipeline, DealStage, Deal
+│   ├── Ticket, Product, LineItem, Engagement, ObjectAssociation
+└── [Dynamics365] Schema (11 Tables)
+    ├── BusinessUnit, SystemUser, Account, Contact, Lead
+    ├── PriceLevel, Product, Opportunity, OpportunityProduct
+    ├── Incident, ActivityPointer
 ```
 
 ---
 
-## Docker & Containerization
+## 🔄 State-Based Migration Strategy (DACPAC Lifecycle)
 
-A complete multi-stage `Dockerfile` and `docker-compose.yml` are provided. The container builds the project, runs SQL Server 2022, and automatically deploys the `.dacpac` so the CRM database schemas are immediately ready for queries.
+### Core Paradigm: Declarative Desired State
 
-### Environment Configuration
+Unlike imperative/migration-based tools (such as Flyway or Liquibase used in **CRMDatabasePG**), this project uses a **declarative state-based approach** established by Microsoft's Data-Tier Application Framework (DACFx):
 
-Configure passwords and container settings in `.env` (a `.env.example` template is provided):
+* **Source of Truth**: The individual `.sql` DDL files in source control represent the **desired end state** of every database object (`CREATE TABLE [Salesforce].[Account]`, etc.).
+* **No Versioned Migration Scripts**: Developers do not write transition scripts (`V1__...`, `V2__...`). Instead, you edit the table definition directly in its `.sql` file.
+* **Compilation**: The .NET SDK builds the `.sqlproj` project into a compiled Data-Tier Application binary package (**`CRMDatabase.dacpac`**).
+* **Automated Differential Deployment**: At release time, the deployment engine (**`SqlPackage.exe`** / DACFx) connects to the target database, inspects the current live catalog, computes a dependency graph diff between the `.dacpac` model and the live database, and generates an ephemeral transactional DDL synchronization script.
 
+```
+┌────────────────────────────────────────────────────────┐
+│               Source Control (Git)                     │
+│  Salesforce/Tables/Account.sql (Declarative DDL)       │
+└───────────────────────────┬────────────────────────────┘
+                            │  dotnet build
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                 CRMDatabase.dacpac                     │
+│         (Compiled Database Model Artifact)             │
+└───────────────────────────┬────────────────────────────┘
+                            │  SqlPackage /Action:Publish
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│            SqlPackage Deployment Engine                │
+│  1. Read Target DB Schema Catalog                      │
+│  2. Compute Topological Graph Diff (Model vs Live)     │
+│  3. Generate Dynamic ALTER / CREATE / DROP Script      │
+│  4. Execute Script inside Database Transaction         │
+└───────────────────────────┬────────────────────────────┘
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│               Live Target Database                     │
+│          (Schema Harmonized to Model State)            │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Key Advantages of State-Based Deployments
+
+1. **Schema Drift Detection & Self-Healing**: If an out-of-band change occurs in a staging or production database, `SqlPackage` automatically detects the discrepancy and reconciles the target database back to match the source code model.
+2. **Simplified Developer Experience for Programmable Code**: Stored procedures, views, user-defined functions, and security roles are edited in-place with standard Git diffs, without managing dozens of incremental migration files.
+3. **Automated Dependency Resolution**: Tables, views, foreign keys, and indexes are created in topological dependency order without manual sequencing.
+4. **Compile-Time Static Analysis**: Building the `.sqlproj` validates syntax, column references, data types, and unresolved foreign keys before reaching any live database.
+
+---
+
+### Handling Complex Schema & Data Transformations
+
+While `SqlPackage` automatically handles additive and non-breaking changes (adding columns, creating indexes, modifying stored procedures), structural refactorings (such as column splits, merges, or renames) require safety mechanisms:
+
+#### 1. Pre-Deployment and Post-Deployment Scripts
+You can include scripts that execute before or after the declarative model synchronization:
+* **`PreDeployment.sql`**: Execute data preservation steps or safety checks prior to schema alterations.
+* **`PostDeployment.sql`**: Backfill default data, refresh lookup tables, or populate new columns from legacy fields.
+
+#### 2. Publish Profiles (`.publish.xml`)
+Fine-tune deployment safety rules using publish parameters:
+* `BlockOnPossibleDataLoss=True`: Prevents deployments that would drop columns containing live data.
+* `DropObjectsNotInSource=False`: Preserves operational objects (e.g. temporary staging tables, external indexes) not tracked in the project.
+* `GenerateSmartDefaults=True`: Automatically provides defaults when adding `NOT NULL` columns to populated tables.
+
+---
+
+### Architectural & Industry References
+
+For foundational reading on state-based lifecycle tools and declarative database development:
+
+1. **Microsoft Learn: SqlPackage & DACFx Architecture**
+   * Detailed overview of the Data-Tier Application Framework, schema comparison engine, and command-line publishing flags.
+   * Read at: [learn.microsoft.com - SqlPackage Overview](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage)
+
+2. **Microsoft Learn: SQL Database Projects & Microsoft.Build.Sql SDK**
+   * Official documentation on cross-platform SDK-style `.sqlproj` development on Linux, macOS, and Windows.
+   * Read at: [learn.microsoft.com - SQL Projects Overview](https://learn.microsoft.com/en-us/azure/azure-sql/database/sql-database-projects-overview)
+
+3. **Redgate Simple Talk: State-Based vs. Migration-Based Database Development**
+   * In-depth comparison of declarative state reconciliation versus incremental delta scripts across enterprise teams.
+   * Read at: [red-gate.com - State-Based vs Migration-Based Development](https://www.red-gate.com/simple-talk/devops/database-devops/state-based-vs-migration-based-database-development/)
+
+4. **Evolutionary Database Design (Pramod Sadalage & Martin Fowler)**
+   * Foundational patterns for version-controlled database schemas and continuous integration.
+   * Read at: [martinfowler.com - Evolutionary Database Design](https://martinfowler.com/articles/evodb.html)
+
+For an in-depth architectural breakdown comparing **State-Based (CRMDatabaseMS / DACPAC)** against **Migration-Based (CRMDatabasePG / Flyway)** across 15+ evaluation criteria:
+
+👉 [MIGRATION_STRATEGY_COMPARISON.md](./MIGRATION_STRATEGY_COMPARISON.md)
+
+---
+
+## 🧪 Testing Strategy: Architectural Division of Responsibilities
+
+### Architectural Rationale: API-First Testing vs. Database Invariants
+
+Modern software architecture and testing consensus strongly advocate for **placing domain validation, business rules, and comprehensive automated test suites in the API / Application layer**, while reserving the database layer for **relational structural guarantees, ACID persistence, and schema integrity**.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        API / Application Layer                         │
+│  - Domain models, state machines, business workflows, validation rules │
+│  - Rich test pyramids (unit, component, contract, integration tests)   │
+│  - Horizontal, inexpensive, stateless scaling (containers / pods)     │
+│  - Rich developer tooling: IDEs, linters, debuggers, profilers, CI/CD  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ SQL Queries / ORM
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                         Database / Storage Layer                       │
+│  - Persistence, ACID transactions, data consistency invariants         │
+│  - Relational constraints (FKs, unique keys, nullability, check types) │
+│  - Indexes, physical layout, performance optimization                  │
+│  - Lightweight structural & smoke verification                         │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Why Industry Best Practices Favor API Layer Testing:
+
+1. **Scaling Economics & Compute Cost**:
+   * API servers are stateless and scale horizontally across commodity compute instances or Kubernetes pods at low cost.
+   * Relational database instances scale vertically; database CPU cycles, IOPS, and connection pools are among the most expensive and contention-prone resources in an infrastructure stack (see [aws.amazon.com - Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)).
+
+2. **Test Pyramid Velocity & Feedback Cycles**:
+   * According to Martin Fowler's *The Practical Test Pyramid* ([martinfowler.com - Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)) and *Microservice Testing* ([martinfowler.com - Microservice Testing](https://martinfowler.com/articles/microservice-testing/)), fast feedback loops depend on lightweight, in-memory unit tests executing in milliseconds.
+   * Testing complex business workflows exclusively in database stored procedures requires standing up isolated database instances, managing transactional state resets, and enduring disk I/O latency, which slows down CI/CD pipelines.
+
+3. **Smart Endpoints and Dumb Pipes**:
+   * A core tenet of modern microservice and web architecture is keeping domain logic in cohesive application services while treating infrastructure and transport mechanisms as decoupled backing services (see [martinfowler.com - Smart Endpoints and Dumb Pipes](https://martinfowler.com/articles/microservices.html#SmartEndpointsAndDumbPipes) and [12factor.net - Stateless Processes & Backing Services](https://12factor.net/)).
+
+4. **Clean Architecture & Domain Decoupling**:
+   * Placing business logic in the API allows databases to be treated as swappable persistence plugins (as outlined in Microsoft's [learn.microsoft.com - Common Web Application Architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)), preventing vendor lock-in to proprietary database dialects (T-SQL, PL/pgSQL).
+
+---
+
+### What Belongs at the Database Level
+
+The database layer remains responsible for enforcing hard structural invariants that protect data consistency regardless of which client or process connects to the database:
+
+1. **Schema & Namespace Verification**: Confirming all 3 CRM schemas (`Salesforce`, `HubSpot`, `Dynamics365`) and 37 entity tables exist.
+2. **Key Constraints & Referential Integrity**: Ensuring primary keys and foreign key constraints are registered and prevent orphaned records.
+3. **Engine-Level Invariant Enforcement (Negative Tests)**: Verifying the database engine rejects foreign key violations, `NOT NULL` violations, and duplicate unique keys.
+4. **Data Seeding & Migration Idempotency**: Ensuring cleanup scripts (`sp_CleanupAllCRMData`) and standard seed scripts (`sp_SeedStandardData` inserting 1,850 rows) execute reliably without deadlocks.
+
+---
+
+### Automated Database Test Suites
+
+The repository includes automated database verification suites in `tests/` (and packaged in `Scripts/03_Run_Schema_And_Integrity_Tests.sql`):
+
+1. **`tests/01_schema_structure_tests.sql`**:
+   - Asserts existence of `[Salesforce]`, `[HubSpot]`, and `[Dynamics365]` schemas.
+   - Verifies exact table counts (15 Salesforce + 11 HubSpot + 11 Dynamics 365 = **37 Tables total**).
+   - Validates that foreign key constraints are registered in `sys.foreign_keys`.
+   - Validates existence of all stored procedures in `dbo`.
+
+2. **`tests/02_data_integrity_and_seed_tests.sql`**:
+   - Tests `[dbo].[sp_CleanupAllCRMData]` wipes all 37 tables cleanly (0 rows remaining).
+   - Tests `[dbo].[sp_SeedStandardData]` seeds exactly 50 records per entity (**1,850 total rows**).
+   - Tests referential integrity (0 orphaned Contacts/Opportunities in Salesforce, 0 orphaned LineItems in HubSpot, 0 orphaned Contacts in Dynamics 365).
+
+3. **`tests/03_constraint_enforcement_tests.sql`**:
+   - Negative / Invariant tests asserting that invalid FK inserts (error 547), `NOT NULL` violations (error 515), and duplicate unique keys (error 2627) are rejected by the database engine.
+   - Asserts computed column evaluation (`Salesforce.User.Name` and `Salesforce.Opportunity.ExpectedRevenue`).
+
+4. **`tests/03_run_all_tests.sql`**:
+   - Master transactional runner executing all 3 suites with structured `[PASS]` / `[FAIL]` reporting.
+
+---
+
+### Running the Database Tests
+
+#### Option 1: Via Docker Container
 ```bash
-# Copy template to .env (if creating fresh)
+# Execute master test suite inside the running container
+docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/tests/03_run_all_tests.sql
+```
+
+#### Option 2: Via Shell Test Runner (`tests/run_tests.sh`)
+```bash
+export DB_SERVER=localhost
+export DB_PORT=1433
+export DB_NAME=CRMDatabase
+export SA_PASSWORD=CrmDev2026!Secure#Pass
+
+./tests/run_tests.sh
+```
+
+#### Option 3: Via Python Test Runner (`tests/run_tests.py`)
+```bash
+python3 tests/run_tests.py
+```
+
+---
+
+## 🚀 Quick Start with Docker
+
+A complete multi-stage `Dockerfile` and `docker-compose.yml` are provided. The container builds the project, runs SQL Server 2022, deploys the `.dacpac`, and pre-seeds initial test data.
+
+### 1. Environment Configuration (`.env`)
+```bash
 cp .env.example .env
 ```
 
@@ -95,191 +240,44 @@ ACCEPT_EULA=Y
 SA_PASSWORD=CrmDev2026!Secure#Pass
 DB_NAME=CRMDatabase
 DB_PORT=1433
+SEED_DATA=standard
+SEED_SCALE_FACTOR=100
 ```
 
-### Run with Docker Compose (Recommended)
-
-Start the database container (loads credentials automatically from `.env`):
-
+### 2. Start the Container
 ```bash
 docker compose up -d
 ```
 
-Check logs to verify the database and schemas are initialized:
-
+### 3. Check Initialization Logs
 ```bash
 docker compose logs -f
 ```
 
-Stop the container:
-
+### 4. Connect via `sqlcmd`
 ```bash
-docker compose down
+docker exec -it crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -Q "SELECT TABLE_SCHEMA, COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA;"
 ```
 
-### Run with Docker CLI
-
-1. **Build the image**:
-   ```bash
-   docker build -t crmdatabase .
-   ```
-
-2. **Run the container**:
-   ```bash
-   docker run -d --name crm-database -p 1433:1433 --env-file .env crmdatabase
-   ```
-
-3. **Connect and verify via container CLI**:
-   ```bash
-   docker exec -it crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -Q "SELECT TABLE_SCHEMA, COUNT(*) AS TableCount FROM INFORMATION_SCHEMA.TABLES GROUP BY TABLE_SCHEMA ORDER BY TABLE_SCHEMA;"
-   ```
-
 ---
 
-## Seed Data & Heavy ETL Workload Simulation
+## 📊 Data Seeding & ETL Benchmarking
 
-The database includes built-in stored procedures and standalone scripts for populating development environments and benchmarking heavy production ETL pipelines.
-
-### Available Datasets
-
-1. **Standard Seed Dataset (`50 Records per Entity`)**:
-   - Creates 50 realistic, relationally linked records with sane defaults across all 37 CRM tables (**1,850 total records**).
-   - Generates realistic business entities, accounts, contacts, campaigns, opportunities, line items, service cases, tasks, and polymorphic associations.
-
-2. **Heavy Production ETL Simulation (`sp_SimulateHeavyETLLoad`)**:
-   - Generates high-volume production datasets using set-based CTE pipelines with realistic distributions, timestamps across a 2-year rolling window, status variations, and soft-delete tombstone flags.
-   - **Configurable Scale Factors**:
-     - `@ScaleFactor = 10`: ~30,000 records total (rapid pipeline verification).
-     - `@ScaleFactor = 100`: ~300,000 records total (standard production ETL benchmark).
-     - `@ScaleFactor = 500`: ~1,500,000 records total (enterprise stress test).
-
----
-
-### Running via Stored Procedures
-
-Execute directly from any SQL client or connection:
-
+### 1. Standard Dataset (1,850 Records)
+Populates 50 realistic rows per table with consistent foreign key associations across all 37 tables:
 ```sql
--- 1. Seed standard 50 records per entity (1,850 records total)
 EXEC [dbo].[sp_SeedStandardData] @CleanExisting = 1;
+```
 
--- 2. Simulate heavy ETL load (e.g. Scale Factor 100 -> ~300,000 records)
+### 2. High-Volume ETL Simulation (~88,000+ Records)
+Simulates high-throughput production CRM bulk imports:
+```sql
+-- Scale Factor 100 generates ~88,000 records
 EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 100, @CleanExisting = 1;
+```
 
--- 3. Reset and clean all CRM tables
+### 3. Full Data Truncation
+Safely empties all 37 tables in topological dependency order:
+```sql
 EXEC [dbo].[sp_CleanupAllCRMData];
 ```
-
----
-
-### Running via Standalone Scripts
-
-Pre-packaged scripts are located in `Scripts/` (and inside the container at `/app/Scripts/`):
-
-- **`Scripts/00_Cleanup_All_Data.sql`**: Wipes all CRM tables in dependency order.
-- **`Scripts/01_Seed_Standard_50Records.sql`**: Seeds 50 records per table with row count verification.
-- **`Scripts/02_Simulate_Heavy_ETL_Load.sql`**: Generates high-volume ETL records with schema summary reports.
-
-Execute via Docker CLI:
-
-```bash
-# Run Standard Seed (50 records per table)
-docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/Scripts/01_Seed_Standard_50Records.sql
-
-# Run Heavy ETL Simulation Load
-docker exec -i crm-database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabase -i /app/Scripts/02_Simulate_Heavy_ETL_Load.sql
-```
-
----
-
-### Automated Container Seeding via Environment Variables
-
-Control automated seeding on startup by configuring `.env`:
-
-```dotenv
-# Options: 'standard' (50 records), 'heavy' (ETL simulation), or 'none'
-SEED_DATA=standard
-
-# Scale factor when SEED_DATA=heavy (10 = ~30k, 100 = ~300k, 500 = ~1.5M)
-SEED_SCALE_FACTOR=100
-```
-
----
-
-## Connection & Login Troubleshooting
-
-### Default Connection Parameters
-
-| Parameter | Value |
-| :--- | :--- |
-| **Server / Host** | `localhost` or `127.0.0.1` |
-| **Port** | `1433` (or `${DB_PORT}`) |
-| **Database** | `CRMDatabase` (or `master`) |
-| **Authentication** | SQL Server Authentication |
-| **Username** | `sa` |
-| **Password** | `CrmDev2026!Secure#Pass` (from `.env`) |
-| **Trust Server Certificate** | `True` / `Yes` |
-
-### Common Login Issues & Solutions
-
-1. **"The certificate chain was issued by an authority that is not trusted" (SSL/TLS Error)**:
-   - **Cause**: SQL Server 2022 enforces encrypted connections by default, and local Docker containers use self-signed TLS certificates.
-   - **Solution**: Enable **Trust Server Certificate** (`TrustServerCertificate=True` or `-C` flag) or set **Encrypt** to optional/disabled in your database client.
-
-2. **"Login failed for user 'sa'" / Password rejected on startup**:
-   - **Cause**: SQL Server requires strong passwords (at least 8 characters containing uppercase, lowercase, numbers, and symbols). Special shell characters like `$` or `!` need proper quoting or should be defined inside `.env`.
-   - **Solution**: Set the password in `.env` and let Docker Compose pass it safely.
-
-3. **Connecting from Host Tools**:
-
-   - **VS Code / Azure Data Studio / JetBrains DataGrip**:
-     - Server: `localhost,1433`
-     - Database: `CRMDatabase`
-     - Authentication: `SQL Login`
-     - User name: `sa`
-     - Password: `CrmDev2026!Secure#Pass`
-     - Advanced: Set **Trust Server Certificate** to `True` / check "Trust server certificate".
-
-   - **SQL Server Management Studio (SSMS 19+)**:
-     - Server name: `localhost,1433`
-     - Authentication: `SQL Server Authentication`
-     - Login: `sa`
-     - Password: `CrmDev2026!Secure#Pass`
-     - Options > Connection Properties: Check **Trust server certificate** and **Encrypt connection: Optional**.
-
-   - **DBeaver**:
-     - Host: `localhost` \| Port: `1433` \| Database: `CRMDatabase`
-     - Username: `sa` \| Password: `CrmDev2026!Secure#Pass`
-     - Driver properties: `trustServerCertificate=true`
-
-   - **ADO.NET / C# Connection String**:
-     ```text
-     Server=localhost,1433;Database=CRMDatabase;User Id=sa;Password=CrmDev2026!Secure#Pass;TrustServerCertificate=True;
-     ```
-
-   - **Node.js (mssql / tedious)**:
-     ```javascript
-     const config = {
-       user: 'sa',
-       password: process.env.SA_PASSWORD || 'CrmDev2026!Secure#Pass',
-       server: 'localhost',
-       port: 1433,
-       database: 'CRMDatabase',
-       options: {
-         encrypt: true,
-         trustServerCertificate: true
-       }
-     };
-     ```
-
-   - **Python (pyodbc)**:
-     ```python
-     conn = pyodbc.connect(
-         'DRIVER={ODBC Driver 18 for SQL Server};'
-         'SERVER=localhost,1433;'
-         'DATABASE=CRMDatabase;'
-         'UID=sa;'
-         'PWD=CrmDev2026!Secure#Pass;'
-         'TrustServerCertificate=yes;'
-     )
-     ```

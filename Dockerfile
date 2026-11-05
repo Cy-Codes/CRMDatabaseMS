@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
 WORKDIR /src
 COPY . .
-RUN dotnet build CRMDatabase/CRMDatabase.sqlproj -c Release -o /app/dacpac
+RUN dotnet build CRMDatabaseMS/CRMDatabaseMS.sqlproj -c Release -o /app/dacpac
 
 # Stage 2: SQL Server runtime with automated DACPAC deployment
 FROM mcr.microsoft.com/mssql/server:2022-latest
@@ -32,7 +32,8 @@ RUN ARCH=$(uname -m) && \
 
 WORKDIR /app
 COPY --from=builder /app/dacpac/CRMDatabase.dacpac /app/CRMDatabase.dacpac
-COPY CRMDatabase/Scripts /app/Scripts
+COPY Scripts /app/Scripts
+COPY tests /app/tests
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && \
     chown -R mssql:root /app /opt/sqlpackage
