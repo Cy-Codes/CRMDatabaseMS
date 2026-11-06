@@ -33,9 +33,10 @@ RUN ARCH=$(uname -m) && \
 WORKDIR /app
 COPY --from=builder /app/dacpac/CRMDatabaseMS.dacpac /app/CRMDatabaseMS.dacpac
 COPY Scripts /app/Scripts
-COPY tests /app/tests
+COPY Tests /app/Tests
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh /app/tests/run_tests.sh && \
+COPY publish.sh /app/publish.sh
+RUN chmod +x /app/entrypoint.sh /app/publish.sh /app/Tests/run_tests.sh && \
     chown -R mssql:root /app /opt/sqlpackage
 
 USER mssql

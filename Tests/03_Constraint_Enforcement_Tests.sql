@@ -1,5 +1,5 @@
 -- ============================================================================
--- Test Suite: 03_constraint_enforcement_tests.sql
+-- Test Suite: 03_Constraint_Enforcement_Tests.sql
 -- Engine: Microsoft SQL Server (T-SQL)
 -- Scope: Negative tests verifying database engine enforcement of FK, NOT NULL,
 --        UNIQUE constraints, and computed generated columns

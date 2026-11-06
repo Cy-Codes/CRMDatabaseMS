@@ -180,24 +180,24 @@ The database layer remains responsible for enforcing hard structural invariants 
 
 ### Automated Database Test Suites
 
-The repository includes automated database verification suites in `tests/` (and packaged in `Scripts/03_Run_Schema_And_Integrity_Tests.sql`):
+The repository includes automated database verification suites in `Tests/` (and packaged in `Scripts/03_Run_Schema_And_Integrity_Tests.sql`):
 
-1. **`tests/01_schema_structure_tests.sql`**:
+1. **`Tests/01_Schema_Structure_Tests.sql`**:
    - Asserts existence of `[Salesforce]`, `[HubSpot]`, and `[Dynamics365]` schemas.
    - Verifies exact table counts (15 Salesforce + 11 HubSpot + 11 Dynamics 365 = **37 Tables total**).
    - Validates that foreign key constraints are registered in `sys.foreign_keys`.
    - Validates existence of all stored procedures in `dbo`.
 
-2. **`tests/02_data_integrity_and_seed_tests.sql`**:
+2. **`Tests/02_Data_Integrity_And_Seed_Tests.sql`**:
    - Tests `[dbo].[sp_CleanupAllCRMData]` wipes all 37 tables cleanly (0 rows remaining).
    - Tests `[dbo].[sp_SeedStandardData]` seeds exactly 50 records per entity (**1,850 total rows**).
    - Tests referential integrity (0 orphaned Contacts/Opportunities in Salesforce, 0 orphaned LineItems in HubSpot, 0 orphaned Contacts in Dynamics 365).
 
-3. **`tests/03_constraint_enforcement_tests.sql`**:
+3. **`Tests/03_Constraint_Enforcement_Tests.sql`**:
    - Negative / Invariant tests asserting that invalid FK inserts (error 547), `NOT NULL` violations (error 515), and duplicate unique keys (error 2627) are rejected by the database engine.
    - Asserts computed column evaluation (`Salesforce.User.Name` and `Salesforce.Opportunity.ExpectedRevenue`).
 
-4. **`tests/03_run_all_tests.sql`**:
+4. **`Tests/04_Run_All_Tests.sql`**:
    - Master transactional runner executing all 3 suites with structured `[PASS]` / `[FAIL]` reporting.
 
 ---
@@ -207,22 +207,22 @@ The repository includes automated database verification suites in `tests/` (and 
 #### Option 1: Via Docker Container
 ```bash
 # Execute master test suite inside the running container
-docker exec -i crm-database-ms /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabaseMS -i /app/tests/03_run_all_tests.sql
+docker exec -i crm-database-ms /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CrmDev2026!Secure#Pass' -C -d CRMDatabaseMS -i /app/Tests/04_Run_All_Tests.sql
 ```
 
-#### Option 2: Via Shell Test Runner (`tests/run_tests.sh`)
+#### Option 2: Via Shell Test Runner (`Tests/run_tests.sh`)
 ```bash
 export DB_SERVER=localhost
 export DB_PORT=1433
 export DB_NAME=CRMDatabaseMS
 export SA_PASSWORD=CrmDev2026!Secure#Pass
 
-./tests/run_tests.sh
+./Tests/run_tests.sh
 ```
 
-#### Option 3: Via Python Test Runner (`tests/run_tests.py`)
+#### Option 3: Via Python Test Runner (`Tests/run_tests.py`)
 ```bash
-python3 tests/run_tests.py
+python3 Tests/run_tests.py
 ```
 
 ---

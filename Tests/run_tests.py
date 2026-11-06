@@ -16,7 +16,7 @@ DEFAULT_DB_PORT: str = "1433"
 DEFAULT_DB_NAME: str = "CRMDatabaseMS"
 DEFAULT_DB_USER: str = "sa"
 DEFAULT_DB_PASSWORD: str = "CrmDev2026!Secure#Pass"
-MASTER_TEST_SUITE_FILENAME: str = "03_run_all_tests.sql"
+MASTER_TEST_SUITE_FILENAME: str = "04_Run_All_Tests.sql"
 
 SQLCMD_CANDIDATES: tuple[str, ...] = (
     "sqlcmd",

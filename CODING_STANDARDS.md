@@ -49,6 +49,13 @@ Each CRM data model belongs to its own schema namespace:
 - `[HubSpot]`: 11 tables modeling HubSpot CRM object entities.
 - `[Dynamics365]`: 11 tables modeling Dataverse Common Data Model entities.
 
+### 2.3 File & Folder Naming
+Follow the SSDT project convention (PascalCase), with each language's own default for tooling files:
+- **Object files** are named after the object they define and live in a PascalCase folder per schema and object type (`Salesforce/Tables/Account.sql`, `StoredProcedures/sp_SeedStandardData.sql`).
+- **Operational and test SQL scripts** use a two-digit run-order prefix followed by `Pascal_Case` words (`Scripts/01_Seed_Standard_50Records.sql`, `Tests/04_Run_All_Tests.sql`).
+- **Python and Bash files** keep their language defaults: `snake_case` for Python modules (PEP 8) and lowercase for shell scripts (`Tests/run_tests.py`, `entrypoint.sh`).
+- **One copy per script**: seed and cleanup scripts live only in the root `Scripts/` folder. `CRMDatabaseMS.sqlproj` lists them as `None` items (`..\Scripts\**\*.sql`) so they show in the project without being compiled into the DACPAC.
+
 ---
 
 ## 3. Set-Based Logic Over Procedural Loops
@@ -152,6 +159,18 @@ END;
 
 ## 8. Python & Shell Test Harness & Pre-Commit Standards
 
-- **Python (`tests/run_tests.py`)**: Zero-dependency, `from __future__ import annotations`, `@dataclass(frozen=True)` (`MsSqlConfig`), `tuple` constants, pure `build_sqlcmd_command`, and functional `next(...)` binary resolution.
-- **Bash (`tests/run_tests.sh`, `entrypoint.sh`)**: Enforces `set -euo pipefail`, `readonly` constants, and reusable `find_sqlcmd` / `run_sqlcmd_file` / `run_sqlcmd_query` helper functions.
+- **Python (`Tests/run_tests.py`)**: Zero-dependency, `from __future__ import annotations`, `@dataclass(frozen=True)` (`MsSqlConfig`), `tuple` constants, pure `build_sqlcmd_command`, and functional `next(...)` binary resolution.
+- **Bash (`Tests/run_tests.sh`, `entrypoint.sh`)**: Enforces `set -euo pipefail`, `readonly` constants, and reusable `find_sqlcmd` / `run_sqlcmd_file` / `run_sqlcmd_query` helper functions.
 - **Pre-Commit Auto-Formatting**: On every `git commit`, the installed pre-commit hook automatically formats staged files, removes unused Python imports, validates `py_compile` and `bash -n` syntax, and re-stages changes.
+
+---
+
+## 9. Container Image & Cloud-Agnostic Schema Migrator
+
+The repository image doubles as a one-shot schema migrator that `crm-infra/` points at any SQL Server endpoint (local container, Amazon RDS for SQL Server, Azure SQL Database). See [crm-infra/CODING_STANDARDS.md](file:///Users/cy/codes/localstack-reference-architecture/crm-infra/CODING_STANDARDS.md) and ADR 12 in [docs/architecture-decisions.md](file:///Users/cy/codes/localstack-reference-architecture/docs/architecture-decisions.md).
+
+- **Single Publish Path**: [`publish.sh`](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/publish.sh) is the only DACPAC publish + seed implementation; `entrypoint.sh` delegates to it for the local container, and `crm-infra/terraform/modules/shared/database-schema` invokes it via `--entrypoint /app/publish.sh`. Never duplicate publish logic elsewhere.
+- **Environment-Only Inputs**: Targets are supplied via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SEED_DATA`, and `ALLOW_INCOMPATIBLE_PLATFORM`, each with a `readonly DEFAULT_*` fallback. Credentials are never passed as positional arguments.
+- **Idempotent & Readiness-Gated**: The runner waits for the endpoint (`MAX_READINESS_ATTEMPTS` × `READINESS_SLEEP_SECONDS`), and DACPAC publish converges to the declared state, so re-running against an up-to-date database is safe.
+- **Platform**: The SQL Server base image is `linux/amd64`-only; keep `platform: linux/amd64` in `crm-infra/compose.yaml` and `migrator_platform` in `crm-infra/terraform/modules/shared/crm-catalog` in sync with the `Dockerfile` base image.
+- **Secrets Hygiene**: Default development passwords live only in `.env.example` and script defaults for local use; real environments always inject credentials at runtime.

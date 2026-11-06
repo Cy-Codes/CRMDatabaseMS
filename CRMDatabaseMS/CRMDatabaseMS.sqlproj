@@ -9,6 +9,6 @@
         <ProjectGuid>8B63DDBF-DEA3-43B6-B613-80C4E03CF094</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="Scripts\**\*.sql" />
+        <None Include="..\Scripts\**\*.sql" />
     </ItemGroup>
 </Project>

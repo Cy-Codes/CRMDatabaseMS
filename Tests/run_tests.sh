@@ -10,7 +10,7 @@ readonly DEFAULT_DB_PORT="1433"
 readonly DEFAULT_DB_NAME="CRMDatabaseMS"
 readonly DEFAULT_DB_USER="sa"
 readonly DEFAULT_DB_PASSWORD="CrmDev2026!Secure#Pass"
-readonly MASTER_TEST_SUITE_FILE="03_run_all_tests.sql"
+readonly MASTER_TEST_SUITE_FILE="04_Run_All_Tests.sql"
 
 DB_SERVER="${DB_SERVER:-${DEFAULT_DB_SERVER}}"
 DB_PORT="${DB_PORT:-${DEFAULT_DB_PORT}}"

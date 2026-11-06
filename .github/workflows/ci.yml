@@ -70,14 +70,14 @@ jobs:
           done
 
       - name: Execute SQL Server Test Suite (Bash Runner)
-        run: docker exec crm-database-ms /app/tests/run_tests.sh
+        run: docker exec crm-database-ms /app/Tests/run_tests.sh
 
       - name: Verify Heavy ETL Load Stored Procedure (ScaleFactor = 10)
         run: |
           docker exec crm-database-ms /opt/mssql-tools18/bin/sqlcmd \
             -S localhost -U "$DB_USER" -P "$SA_PASSWORD" -C -d "$DB_NAME" -b \
             -Q "EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 10, @CleanExisting = 1;"
-          docker exec crm-database-ms /app/tests/run_tests.sh
+          docker exec crm-database-ms /app/Tests/run_tests.sh
 
       - name: Tear Down Container
         if: always()
