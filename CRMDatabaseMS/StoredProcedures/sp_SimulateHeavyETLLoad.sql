@@ -4,6 +4,7 @@ CREATE PROCEDURE [dbo].[sp_SimulateHeavyETLLoad]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     IF @ScaleFactor < 1
         SET @ScaleFactor = 1;
@@ -39,7 +40,7 @@ BEGIN
     BEGIN TRANSACTION;
     BEGIN TRY
         -- Fast Tally table builder
-        ;WITH 
+        ;WITH
             E1(N) AS (SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1), -- 10
             E2(N) AS (SELECT 1 FROM E1 a CROSS JOIN E1 b), -- 100
             E4(N) AS (SELECT 1 FROM E2 a CROSS JOIN E2 b), -- 10,000
@@ -58,7 +59,7 @@ BEGIN
 
         -- Users
         INSERT INTO [Salesforce].[User] ([Id], [Username], [LastName], [FirstName], [Email], [IsActive], [Title], [Department], [Phone])
-        SELECT 
+        SELECT
             '005' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             'sf_user_' + CAST(N AS NVARCHAR(20)) + '@enterprise-etl.com',
             'RepLastName_' + CAST(N AS NVARCHAR(20)),
@@ -76,7 +77,7 @@ BEGIN
             [BillingCountry], [Phone], [Website], [Industry], [AnnualRevenue], [NumberOfEmployees], [Description],
             [OwnerId], [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '001' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             CASE WHEN (N % 50) = 0 THEN 1 ELSE 0 END, -- 2% soft deleted for ETL tombstone testing
             'Enterprise Corp ' + CAST(N AS NVARCHAR(20)),
@@ -101,7 +102,7 @@ BEGIN
 
         -- Products
         INSERT INTO [Salesforce].[Product2] ([Id], [Name], [ProductCode], [Description], [IsActive], [Family], [CreatedById], [LastModifiedById])
-        SELECT 
+        SELECT
             '01t' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             'Salesforce Cloud Product SKU ' + CAST(N AS NVARCHAR(20)),
             'SKU-SF-ETL-' + RIGHT('000000' + CAST(N AS NVARCHAR(20)), 6),
@@ -114,7 +115,7 @@ BEGIN
 
         -- Pricebook2 (Standard + Tiers)
         INSERT INTO [Salesforce].[Pricebook2] ([Id], [Name], [Description], [IsActive], [IsStandard], [CreatedById], [LastModifiedById])
-        SELECT 
+        SELECT
             '01s' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             CASE WHEN N = 1 THEN 'Standard Price Book' ELSE 'Commercial Enterprise Price Book Tier ' + CAST(N AS NVARCHAR(20)) END,
             'ETL Pricebook tier ' + CAST(N AS NVARCHAR(20)),
@@ -125,7 +126,7 @@ BEGIN
 
         -- PricebookEntry
         INSERT INTO [Salesforce].[PricebookEntry] ([Id], [Pricebook2Id], [Product2Id], [UnitPrice], [IsActive], [UseStandardPrice], [CreatedById], [LastModifiedById])
-        SELECT 
+        SELECT
             '01u' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             '01s' + RIGHT('000000000000' + CAST(((N - 1) % (CASE WHEN @ProductCount < 50 THEN @ProductCount ELSE 50 END)) + 1 AS NVARCHAR(20)), 12) + 'AAA',
             '01t' + RIGHT('000000000000' + CAST(((N - 1) % @ProductCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
@@ -139,7 +140,7 @@ BEGIN
             [Id], [IsDeleted], [AccountId], [LastName], [FirstName], [Salutation], [Title], [Department],
             [Email], [Phone], [LeadSource], [OwnerId], [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '003' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             CASE WHEN (N % 50) = 0 THEN 1 ELSE 0 END,
             '001' + RIGHT('000000000000' + CAST(((N - 1) % @AccountCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
@@ -164,7 +165,7 @@ BEGIN
             [Status], [Industry], [AnnualRevenue], [NumberOfEmployees], [IsConverted], [OwnerId],
             [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '00Q' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             'LeadLast_' + CAST(N AS NVARCHAR(20)),
             'LeadFirst_' + CAST(N AS NVARCHAR(20)),
@@ -191,7 +192,7 @@ BEGIN
             [CloseDate], [Type], [LeadSource], [IsClosed], [IsWon], [ForecastCategoryName],
             [OwnerId], [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '006' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             '001' + RIGHT('000000000000' + CAST(((N - 1) % @AccountCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
             'Deal - Cloud Migration Project #' + CAST(N AS NVARCHAR(20)),
@@ -215,7 +216,7 @@ BEGIN
         INSERT INTO [Salesforce].[OpportunityLineItem] (
             [Id], [OpportunityId], [PricebookEntryId], [Quantity], [UnitPrice], [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '00k' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             '006' + RIGHT('000000000000' + CAST(((N - 1) % @OpportunityCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
             '01u' + RIGHT('000000000000' + CAST(((N - 1) % @ProductCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
@@ -232,7 +233,7 @@ BEGIN
             [Id], [CaseNumber], [ContactId], [AccountId], [Type], [Status], [Origin], [Subject], [Priority], [Description], [OwnerId],
             [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '500' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             'SF-ETL-' + RIGHT('00000000' + CAST(N AS NVARCHAR(20)), 8),
             '003' + RIGHT('000000000000' + CAST(((N - 1) % @ContactCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
@@ -255,7 +256,7 @@ BEGIN
             [Id], [WhoId], [WhatId], [Subject], [ActivityDate], [Status], [Priority], [IsHighPriority], [Description], [OwnerId],
             [CreatedDate], [CreatedById], [LastModifiedDate], [LastModifiedById]
         )
-        SELECT 
+        SELECT
             '00T' + RIGHT('000000000000' + CAST(N AS NVARCHAR(20)), 12) + 'AAA',
             '003' + RIGHT('000000000000' + CAST(((N - 1) % @ContactCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
             '006' + RIGHT('000000000000' + CAST(((N - 1) % @OpportunityCount) + 1 AS NVARCHAR(20)), 12) + 'AAA',
@@ -280,7 +281,7 @@ BEGIN
 
         -- Owners
         INSERT INTO [HubSpot].[Owner] ([ownerId], [email], [firstName], [lastName], [userId], [createdAt], [updatedAt])
-        SELECT 
+        SELECT
             100000 + N,
             'hs_rep_' + CAST(N AS NVARCHAR(20)) + '@growth-etl.com',
             'HubRepFirst_' + CAST(N AS NVARCHAR(20)),
@@ -295,7 +296,7 @@ BEGIN
             [companyId], [name], [domain], [industry], [phone], [city], [state], [country],
             [annualRevenue], [numberOfEmployees], [lifecyclestage], [ownerId], [createdAt], [updatedAt], [archived]
         )
-        SELECT 
+        SELECT
             200000 + N,
             'HubSpot Inbound Enterprise ' + CAST(N AS NVARCHAR(20)),
             'company' + CAST(N AS NVARCHAR(20)) + '-inbound.io',
@@ -318,7 +319,7 @@ BEGIN
             [contactId], [email], [firstName], [lastName], [phone], [jobTitle], [lifecyclestage],
             [leadStatus], [associatedCompanyId], [ownerId], [createdAt], [updatedAt], [archived]
         )
-        SELECT 
+        SELECT
             300000 + N,
             'inbound_user_' + CAST(N AS NVARCHAR(20)) + '@company' + CAST(((N - 1) % @AccountCount) + 1 AS NVARCHAR(20)) + '-inbound.io',
             'InboundFirst_' + CAST(N AS NVARCHAR(20)),
@@ -336,7 +337,7 @@ BEGIN
 
         -- Pipelines & Stages
         INSERT INTO [HubSpot].[Pipeline] ([pipelineId], [label], [displayOrder], [objectType], [createdAt], [updatedAt])
-        SELECT 
+        SELECT
             'pipe_' + CAST(400000 + N AS NVARCHAR(20)),
             'HubSpot Sales Pipeline Tier ' + CAST(N AS NVARCHAR(20)),
             N, 'deals',
@@ -344,7 +345,7 @@ BEGIN
         FROM #Tally WHERE N <= CASE WHEN @ProductCount < 50 THEN @ProductCount ELSE 50 END;
 
         INSERT INTO [HubSpot].[DealStage] ([stageId], [pipelineId], [label], [displayOrder], [probability], [closedWon], [createdAt], [updatedAt])
-        SELECT 
+        SELECT
             'stage_' + CAST(500000 + N AS NVARCHAR(20)),
             'pipe_' + CAST(400000 + ((N - 1) % (CASE WHEN @ProductCount < 50 THEN @ProductCount ELSE 50 END)) + 1 AS NVARCHAR(20)),
             CASE (N % 5) WHEN 0 THEN 'Appointment Scheduled' WHEN 1 THEN 'Qualified To Buy' WHEN 2 THEN 'Presentation Scheduled' WHEN 3 THEN 'Contract Sent' ELSE 'Closed Won' END,
@@ -359,7 +360,7 @@ BEGIN
             [dealId], [dealName], [amount], [pipelineId], [dealStageId], [closedate], [dealType], [ownerId],
             [createdAt], [updatedAt], [archived]
         )
-        SELECT 
+        SELECT
             600000 + N,
             'HubSpot Growth Package Deal #' + CAST(N AS NVARCHAR(20)),
             CAST(5000 + ((N * 31) % 250000) AS DECIMAL(18,2)),
@@ -377,7 +378,7 @@ BEGIN
         INSERT INTO [HubSpot].[Product] (
             [productId], [name], [description], [price], [cost], [recurringBillingFrequency], [createdAt], [updatedAt]
         )
-        SELECT 
+        SELECT
             800000 + N,
             'HubSpot Marketing Hub SKU ' + CAST(N AS NVARCHAR(20)),
             'High volume ETL product SKU description #' + CAST(N AS NVARCHAR(20)),
@@ -391,7 +392,7 @@ BEGIN
         INSERT INTO [HubSpot].[LineItem] (
             [lineItemId], [dealId], [productId], [name], [quantity], [price], [discount], [createdAt], [updatedAt]
         )
-        SELECT 
+        SELECT
             900000 + N,
             600000 + ((N - 1) % @OpportunityCount) + 1,
             800000 + ((N - 1) % @ProductCount) + 1,
@@ -407,7 +408,7 @@ BEGIN
         INSERT INTO [HubSpot].[Engagement] (
             [engagementId], [engagementType], [timestamp], [ownerId], [body], [status], [createdAt], [updatedAt]
         )
-        SELECT 
+        SELECT
             1000000 + N,
             CASE (N % 5) WHEN 0 THEN 'EMAIL' WHEN 1 THEN 'CALL' WHEN 2 THEN 'MEETING' WHEN 3 THEN 'NOTE' ELSE 'TASK' END,
             DATEADD(MINUTE, -(N % 1051200), SYSUTCDATETIME()),
@@ -422,7 +423,7 @@ BEGIN
         INSERT INTO [HubSpot].[ObjectAssociation] (
             [fromObjectType], [fromObjectId], [toObjectType], [toObjectId], [associationTypeId], [createdAt]
         )
-        SELECT 
+        SELECT
             'contact',
             300000 + N,
             'company',
@@ -463,7 +464,7 @@ BEGIN
 
         -- Business Units
         INSERT INTO [Dynamics365].[BusinessUnit] ([businessunitid], [name], [parentbusinessunitid], [isdisabled], [createdon], [modifiedon])
-        SELECT 
+        SELECT
             b.BUId,
             'Dynamics BU Regional Division #' + CAST(b.N AS NVARCHAR(20)),
             CASE WHEN b.N > 1 THEN (SELECT TOP 1 BUId FROM #D365_Bulk_BU WHERE N = 1) ELSE NULL END,
@@ -475,7 +476,7 @@ BEGIN
         INSERT INTO [Dynamics365].[SystemUser] (
             [systemuserid], [businessunitid], [domainname], [fullname], [firstname], [lastname], [internalemailaddress], [jobtitle], [isdisabled], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             u.UserId,
             b.BUId,
             'CORP\\d365_rep_' + CAST(u.N AS NVARCHAR(20)),
@@ -494,7 +495,7 @@ BEGIN
         INSERT INTO [Dynamics365].[Product] (
             [productid], [productnumber], [name], [description], [price], [standardcost], [currentcost], [quantityonhand], [statecode], [statuscode], [createdby], [modifiedby]
         )
-        SELECT 
+        SELECT
             p.ProductId,
             'MS-D365-ETL-' + RIGHT('000000' + CAST(p.N AS NVARCHAR(20)), 6),
             'Dataverse Enterprise Solution SKU ' + CAST(p.N AS NVARCHAR(20)),
@@ -511,7 +512,7 @@ BEGIN
         INSERT INTO [Dynamics365].[PriceLevel] (
             [pricelevelid], [name], [begindate], [enddate], [statecode], [statuscode], [createdby], [modifiedby]
         )
-        SELECT 
+        SELECT
             pl.PriceLevelId,
             'Dynamics Commercial Price List Tier ' + CAST(pl.N AS NVARCHAR(20)),
             DATEADD(YEAR, -2, CAST(SYSUTCDATETIME() AS DATE)),
@@ -528,7 +529,7 @@ BEGIN
             [industrycode], [statecode], [statuscode], [ownerid], [owningbusinessunit], [createdby], [modifiedby],
             [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0xC1000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             'ACC-' + RIGHT('00000000' + CAST(t.N AS NVARCHAR(20)), 8),
             'Dataverse Global Corp ' + CAST(t.N AS NVARCHAR(20)),
@@ -561,7 +562,7 @@ BEGIN
             [parentcustomerid], [statecode], [statuscode], [ownerid], [owningbusinessunit], [createdby], [modifiedby],
             [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0xD2000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             'D365 Contact ' + CAST(t.N AS NVARCHAR(20)),
             'D365First_' + CAST(t.N AS NVARCHAR(20)),
@@ -588,7 +589,7 @@ BEGIN
             [leadqualitycode], [leadsourcecode], [estimatedamount], [statecode], [statuscode],
             [ownerid], [owningbusinessunit], [createdby], [modifiedby], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0x73000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             'Lead Opportunity Qualification #' + CAST(t.N AS NVARCHAR(20)),
             'D365 Lead ' + CAST(t.N AS NVARCHAR(20)),
@@ -618,7 +619,7 @@ BEGIN
             [closeprobability], [parentaccountid], [pricelevelid], [statecode], [statuscode],
             [ownerid], [owningbusinessunit], [createdby], [modifiedby], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0xE3000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             'Dynamics Enterprise Deal Package #' + CAST(t.N AS NVARCHAR(20)),
             'Dataverse digital transformation opportunity #' + CAST(t.N AS NVARCHAR(20)),
@@ -646,7 +647,7 @@ BEGIN
         INSERT INTO [Dynamics365].[OpportunityProduct] (
             [opportunityproductid], [opportunityid], [productid], [priceperunit], [quantity], [manualdiscountamount], [createdby], [modifiedby], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0xF4000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             CAST(CAST(0xE3000000 + (((t.N - 1) % @OpportunityCount) + 1) AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             pr.ProductId,
@@ -667,7 +668,7 @@ BEGIN
             [prioritycode], [severitycode], [casetypecode], [statecode], [statuscode],
             [ownerid], [owningbusinessunit], [createdby], [modifiedby], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0x15000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             'D365-ETL-CAS-' + RIGHT('00000000' + CAST(t.N AS NVARCHAR(20)), 8),
             'Customer Escalation SLA Ticket #' + CAST(t.N AS NVARCHAR(20)),
@@ -692,7 +693,7 @@ BEGIN
             [regardingobjectid_account], [regardingobjectid_opportunity], [ownerid], [owningbusinessunit],
             [createdby], [modifiedby], [createdon], [modifiedon]
         )
-        SELECT 
+        SELECT
             CAST(CAST(0x26000000 + t.N AS BINARY(4)) + 0x000000000000000000000000 AS UNIQUEIDENTIFIER),
             CASE (t.N % 4) WHEN 0 THEN 'task' WHEN 1 THEN 'phonecall' WHEN 2 THEN 'email' ELSE 'appointment' END,
             'Activity #' + CAST(t.N AS NVARCHAR(20)) + ': Dataverse ETL Sync',
@@ -727,9 +728,6 @@ BEGIN
         IF OBJECT_ID('tempdb..#D365_Bulk_Product') IS NOT NULL DROP TABLE #D365_Bulk_Product;
         IF OBJECT_ID('tempdb..#D365_Bulk_PriceLevel') IS NOT NULL DROP TABLE #D365_Bulk_PriceLevel;
 
-        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
-        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
-        DECLARE @ErrorState INT = ERROR_STATE();
-        RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+        THROW;
     END CATCH
 END;
