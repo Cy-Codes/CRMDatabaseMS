@@ -131,16 +131,16 @@ END
 -- migrations/V8__split_contact_fullname.sql
 BEGIN;
 
-ALTER TABLE "Salesforce"."Contact" 
+ALTER TABLE "Salesforce"."Contact"
 ADD COLUMN "FirstName" VARCHAR(80),
 ADD COLUMN "LastName" VARCHAR(80);
 
 UPDATE "Salesforce"."Contact"
-SET 
+SET
     "FirstName" = split_part("FullName", ' ', 1),
     "LastName" = COALESCE(NULLIF(substr("FullName", length(split_part("FullName", ' ', 1)) + 2), ''), 'Unknown');
 
-ALTER TABLE "Salesforce"."Contact" 
+ALTER TABLE "Salesforce"."Contact"
 ALTER COLUMN "LastName" SET NOT NULL,
 DROP COLUMN "FullName";
 

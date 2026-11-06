@@ -16,7 +16,7 @@ EXEC [dbo].[sp_SimulateHeavyETLLoad] @ScaleFactor = 100, @CleanExisting = 1;
 GO
 
 -- Verify total row counts per table across all 3 CRM schemas
-SELECT 
+SELECT
     t.TABLE_SCHEMA AS [Schema],
     t.TABLE_NAME AS [Table],
     p.rows AS [RowCount]
@@ -28,7 +28,7 @@ ORDER BY t.TABLE_SCHEMA, [RowCount] DESC, t.TABLE_NAME;
 GO
 
 -- Total row count summary across the entire database
-SELECT 
+SELECT
     t.TABLE_SCHEMA AS [Schema],
     SUM(p.rows) AS [TotalRows]
 FROM INFORMATION_SCHEMA.TABLES t

@@ -11,7 +11,7 @@ EXEC [dbo].[sp_SeedStandardData] @CleanExisting = 1;
 GO
 
 -- Verify row counts across all 3 CRM schemas
-SELECT 
+SELECT
     t.TABLE_SCHEMA AS [Schema],
     t.TABLE_NAME AS [Table],
     p.rows AS [RowCount]
