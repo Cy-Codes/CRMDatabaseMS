@@ -5,15 +5,28 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    IF @CleanExisting = 1
-    BEGIN
-        EXEC [dbo].[sp_CleanupAllCRMData];
-    END
-
-    PRINT 'Seeding standard CRM data (50 records per entity with sane defaults)...';
+    DECLARE @LockResult INT;
 
     BEGIN TRANSACTION;
     BEGIN TRY
+        -- Acquire exclusive application lock for data seeding
+        EXEC @LockResult = sp_getapplock
+            @Resource = 'CRM_Seed_Lock',
+            @LockMode = 'Exclusive',
+            @LockOwner = 'Transaction',
+            @LockTimeout = 60000;
+
+        IF @LockResult < 0
+        BEGIN
+            RAISERROR('Failed to acquire application lock for seeding (Result: %d).', 16, 1, @LockResult);
+        END;
+
+        IF @CleanExisting = 1
+        BEGIN
+            EXEC [dbo].[sp_CleanupAllCRMData];
+        END;
+
+        PRINT 'Seeding standard CRM data (50 records per entity with sane defaults)...';
         -------------------------------------------------------------------------
         -- Tally table generation for 50 records (1 to 50)
         -------------------------------------------------------------------------

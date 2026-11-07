@@ -20,6 +20,7 @@ CREATE TABLE [HubSpot].[Contact]
     [updatedAt] DATETIME2 NOT NULL CONSTRAINT [DF_HubSpot_Contact_updatedAt] DEFAULT (SYSUTCDATETIME()),
     [archived] BIT NOT NULL CONSTRAINT [DF_HubSpot_Contact_archived] DEFAULT (0),
     CONSTRAINT [PK_HubSpot_Contact] PRIMARY KEY CLUSTERED ([contactId] ASC),
+    CONSTRAINT [UQ_HubSpot_Contact_email] UNIQUE ([email]),
     CONSTRAINT [FK_HubSpot_Contact_associatedCompanyId] FOREIGN KEY ([associatedCompanyId]) REFERENCES [HubSpot].[Company] ([companyId]),
     CONSTRAINT [FK_HubSpot_Contact_ownerId] FOREIGN KEY ([ownerId]) REFERENCES [HubSpot].[Owner] ([ownerId])
 );
