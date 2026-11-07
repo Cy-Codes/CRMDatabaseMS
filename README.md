@@ -8,7 +8,7 @@ A production-grade Microsoft SQL Server / Azure SQL database project (`Microsoft
 
 This project utilizes a **declarative, state-based database deployment model** powered by SQL Server Data Tools (SSDT), the `Microsoft.Build.Sql` SDK, and DACPAC artifacts.
 
-For coding conventions, T-SQL guidelines, and set-based design rules, consult the **[CRMDatabaseMS Coding Standards](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/CODING_STANDARDS.md)** and workspace **[Coding Standards](file:///Users/cy/codes/localstack-reference-architecture/CODING_STANDARDS.md)**.
+For coding conventions, T-SQL guidelines, and set-based design rules, consult the **[CRMDatabaseMS Coding Standards](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/CODING_STANDARDS.md)** and workspace **[Coding Standards](file:///Users/cy/codes/localstack-reference-architecture/CODING_STANDARDS.md)**. For how this state-based approach compares with the PostgreSQL migration model, see the **[Migration Strategy Comparison](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/MIGRATION_STRATEGY_COMPARISON.md)**.
 
 ---
 

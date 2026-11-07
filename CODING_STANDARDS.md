@@ -167,7 +167,7 @@ END;
 
 ## 9. Container Image & Cloud-Agnostic Schema Migrator
 
-The repository image doubles as a one-shot schema migrator that `crm-infra/` points at any SQL Server endpoint (local container, Amazon RDS for SQL Server, Azure SQL Database). See [crm-infra/CODING_STANDARDS.md](file:///Users/cy/codes/localstack-reference-architecture/crm-infra/CODING_STANDARDS.md) and ADR 12 in [docs/architecture-decisions.md](file:///Users/cy/codes/localstack-reference-architecture/docs/architecture-decisions.md).
+The repository image doubles as a one-shot schema migrator that `crm-infra/` points at any SQL Server endpoint (local container, Amazon RDS for SQL Server, Azure SQL Database). See [crm-infra/CODING_STANDARDS.md](file:///Users/cy/codes/localstack-reference-architecture/crm-infra/CODING_STANDARDS.md) and ADR 4 in [docs/architecture-decisions.md](file:///Users/cy/codes/localstack-reference-architecture/docs/architecture-decisions.md). For the migration strategy rationale, see [MIGRATION_STRATEGY_COMPARISON.md](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/MIGRATION_STRATEGY_COMPARISON.md).
 
 - **Single Publish Path**: [`publish.sh`](file:///Users/cy/codes/localstack-reference-architecture/CRMDatabaseMS/publish.sh) is the only DACPAC publish + seed implementation; `entrypoint.sh` delegates to it for the local container, and `crm-infra/terraform/modules/shared/database-schema` invokes it via `--entrypoint /app/publish.sh`. Never duplicate publish logic elsewhere.
 - **Environment-Only Inputs**: Targets are supplied via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SEED_DATA`, and `ALLOW_INCOMPATIBLE_PLATFORM`, each with a `readonly DEFAULT_*` fallback. Credentials are never passed as positional arguments.
